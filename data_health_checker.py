@@ -43,7 +43,17 @@ class DataHealthChecker():
 
         health_checker = healthTests(self.df)
         columns_count = health_checker.count_columns()
-        print(columns_count)
+        records_count = health_checker.count_records()
+        non_emptyrecords_count = health_checker.get_nonEmptyRecordsCount()
+        completeness = health_checker.check_completeness()
+        uniqueness = health_checker.check_uniqueness()
+
+        print(f"columns: {columns_count}\n"
+              f"records: {records_count}\n"
+              f"not empty records: {non_emptyrecords_count}\n"
+              f"completeness: {completeness}\n"
+              f"uniqueness: {uniqueness}\n"
+              )
 
         self.close_session()
 

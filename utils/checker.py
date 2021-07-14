@@ -1,3 +1,4 @@
+import pyspark.sql.functions as f
 
 class healthTests():
 
@@ -7,17 +8,37 @@ class healthTests():
                  **kwargs):
 
         self.df = df
+        self.emptyrecordcount = None
+        self.non_emptyrecordcount = None
+        self.record_count = None
+        self.df_cols = None
+        self.unique_recordscount = None
+        self.completeness = None
+        self.uniqueness = None
 
     def count_columns(self, expected_col_count=None, *args, **kwargs):
-        df_cols = self.df.columns
-        if expected_col_count and len(df_cols) != len(df_cols):
+        self.df_cols = self.df.columns
+        if expected_col_count and len(self.df_cols) != len(self.df_cols):
             raise Exception("The number of columns in the loaded dataframe is not equal to given expected count")
         else:
-            print(f"Given Data Frame has {len(df_cols)} columns")
-            return len(df_cols)
+            print(f"Given Data Frame has {len(self.df_cols)} columns")
+            return len(self.df_cols)
 
     def count_records(self, *args, **kwargs):
-        return self.df.count()
+        self.record_count = self.df.count()
+        return self.record_count
+
+    def get_nonEmptyRecordsCount(self):
+        build_query = ""
+        for col in self.df.columns:
+            build_query += col + " is null AND "
+        build_query = build_query[:-4]
+        self.emptyrecordcount = self.df.filter(build_query).count()
+        self.non_emptyrecordcount = self.record_count - self.emptyrecordcount
+        return self.non_emptyrecordcount
+
+    def get_uniqueRecordsCount(self):
+        self.unique_recordscount = self.df.distinct().count()
 
     def check_completeness(self):
         """
@@ -26,7 +47,13 @@ class healthTests():
         Records)
         :return:
         """
-        pass
+        # Assuming that Non-Empty Records means all the columns having the null values for the record
+        if not self.non_emptyrecordcount:
+            self.get_nonEmptyRecordsCount()
+        if not self.record_count:
+            self.count_records()
+        self.completeness = (int(self.non_emptyrecordcount) / (len(self.df_cols) * int(self.record_count))) * 100
+        return self.completeness
 
     def check_completeness_except_null_columns(self):
         """
@@ -42,7 +69,10 @@ class healthTests():
         No. or Unique Rows excluding Primary Keys
         :return:
         """
-        pass
+        if not self.unique_recordscount:
+            self.get_uniqueRecordsCount()
+        self.uniqueness = (int(self.unique_recordscount) / len(self.df_cols) * int(self.record_count)) * 100
+        return self.uniqueness
 
     def check_health_score(self):
         """
@@ -50,7 +80,14 @@ class healthTests():
         Uniqueness
         :return:
         """
-        pass
+        if not self.completeness:
+            self.check_completeness()
+        if not self.uniqueness:
+            self.check_completeness()
+
+        health_score = (self.completeness + self.uniqueness)/2
+
+        return health_score
 
     def check_datatypes(self):
         """
@@ -67,7 +104,7 @@ class healthTests():
         Table)
         :return:
         """
-        pass
+        return (self.non_emptyrecordcount * 100)/self.record_count
 
     def check_empty_count(self):
         """
