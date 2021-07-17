@@ -1,3 +1,11 @@
+"""
+TODO1: Adding plotting or reporting to this module
+TODO2: enable logging
+TODO3: Do the optimization
+TODO4: Add more checks
+TODO5: Adding documentation
+"""
+
 from pyspark.sql import SparkSession
 from utils.reader import dataReader
 from utils.checker import healthTests
@@ -47,17 +55,23 @@ class DataHealthChecker():
         non_emptyrecords_count = health_checker.get_nonEmptyRecordsCount()
         completeness = health_checker.check_completeness()
         uniqueness = health_checker.check_uniqueness()
+        variances = health_checker.check_variance()
+        medians = health_checker.check_median()
 
         print(f"columns: {columns_count}\n"
               f"records: {records_count}\n"
               f"not empty records: {non_emptyrecords_count}\n"
               f"completeness: {completeness}\n"
               f"uniqueness: {uniqueness}\n"
+              f"medians: {medians}\n"
+              f"variances: {variances}"
+
               )
 
         self.close_session()
 
+
 if __name__ == "__main__":
-    health_checker = DataHealthChecker(input_file="data/VisitorLogsData.csv", file_format="CSV")
+    health_checker = DataHealthChecker(input_file="data/sample_input.csv", file_format="CSV", header=True)
 
     health_checker.process()
